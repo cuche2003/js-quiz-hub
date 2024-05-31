@@ -1,0 +1,99 @@
+﻿@page "/Attempts/edit"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>Attempt</h4>
+<hr />
+@if (Attempt is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Attempt" OnValidSubmit="UpdateAttempt" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Attempt.Id" value="@Attempt.Id" />
+                <div class="mb-3">
+                    <label for="userid" class="form-label">UserId:</label>
+                    <InputText id="userid" @bind-Value="Attempt.UserId" class="form-control" />
+                    <ValidationMessage For="() => Attempt.UserId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="quizid" class="form-label">QuizId:</label>
+                    <InputNumber id="quizid" @bind-Value="Attempt.QuizId" class="form-control" />
+                    <ValidationMessage For="() => Attempt.QuizId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="created" class="form-label">Created:</label>
+                    <InputDate id="created" @bind-Value="Attempt.Created" class="form-control" />
+                    <ValidationMessage For="() => Attempt.Created" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/attempts">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public Attempt? Attempt { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Attempt ??= await DB.Attempt.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Attempt is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateAttempt()
+    {
+        DB.Attach(Attempt!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!AttemptExists(Attempt!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/attempts");
+    }
+
+    bool AttemptExists(int id)
+    {
+        return DB.Attempt.Any(e => e.Id == id);
+    }
+}

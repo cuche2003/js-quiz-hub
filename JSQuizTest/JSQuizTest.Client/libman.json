@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "Darkmode.js@1.5.7",
+      "destination": "wwwroot/lib/Darkmode.js/",
+      "files": [
+        "darkmode-js.min.js"
+      ]
+    }
+  ]
+}

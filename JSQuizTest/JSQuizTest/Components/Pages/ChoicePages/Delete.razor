@@ -1,0 +1,64 @@
+﻿@page "/choices/delete"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Choice</h4>
+    <hr />
+    @if (choice is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">QuestionId</dt>
+            <dd class="col-sm-10">@choice.QuestionId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@choice.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">IsCorrect</dt>
+            <dd class="col-sm-10">@choice.IsCorrect</dd>
+        </dl>
+        <EditForm method="post" Model="choice" OnValidSubmit="DeleteChoice" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(choice is null)">Delete</button> |
+            <a href="@($"/questions/details?id={choice!.QuestionId}")">Back to Question</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    Choice? choice;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        choice = await DB.Choice.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (choice is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    public async Task DeleteChoice()
+    {
+        DB.Choice.Remove(choice!);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo($"/questions/details?id={choice!.QuestionId}");
+    }
+}

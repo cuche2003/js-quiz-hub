@@ -1,0 +1,74 @@
+﻿@page "/attempts/create"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using Microsoft.EntityFrameworkCore
+@using JSQuizTest.Data
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using System.Security.Claims
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Attempt</PageTitle>
+
+<h1>Attempt</h1>
+
+<h4>Attempt</h4>
+<AuthorizeView>
+    <Authorized>
+        <div class="row">
+            <div class="col-md-4">
+                <h4 class="h4">You can start a new attempt by click the Start button below.</h4>
+                <h4 class="h4">By clicking the button, you honor the pledge that you will not cheat.</h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <EditForm Context="Attempt" method="post" Model="Attempt" OnValidSubmit="AddAttempt" FormName="create" Enhance>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" />
+                    @if (QuizId is not null && context.User is not null && context.User.Identity is not null)
+                    {
+                        <input type="hidden" name="Attempt.QuizId" value="@QuizId" />
+                        <input type="hidden" name="Attempt.UserId" value="@context.User.Identity.Name" />
+                        <input type="hidden" name="Attempt.IsDone" value="@Boolean.FalseString" />
+                    }
+                    <button type="submit" class="btn btn-primary">Start</button>
+                </EditForm>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You're not authorized.</p>
+    </NotAuthorized>
+</AuthorizeView>
+<hr />
+<div>
+    <a href="/attempts">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? QuizId { get; set; }
+
+    [SupplyParameterFromForm]
+    public Attempt Attempt { get; set; } = new();
+
+    public List<Quiz> Quizzes = [];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Quizzes = DbFactory.CreateDbContext().Quiz.ToList();
+    }
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddAttempt()
+    {
+        DB.Attempt.Add(Attempt);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo($"/attempts/details?id={Attempt.Id}");
+    }
+}

@@ -1,0 +1,74 @@
+﻿@page "/questions/details"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Question Details</PageTitle>
+
+<h1>Question Details</h1>
+
+<div>
+    <h4>Question</h4>
+    <hr />
+    @if (Question is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@Question.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Choices</dt>
+            <dd class="col-sm-10">
+
+                @if (Question.Choices.Count == 0)
+                {
+                    <p>This question has no choices (yet!).</p>
+                }
+                else
+                {
+                    <QuickGrid Class="table" Items="Queryable.AsQueryable(Question.Choices)">
+                        <PropertyColumn Property="choice => choice.Description" />
+                        <PropertyColumn Property="choice => choice.IsCorrect" />
+                        <TemplateColumn Context="choice">
+                            <a href="@($"choices/edit?id={choice.Id}")">Edit</a> |
+                            <a href="@($"choices/details?id={choice.Id}")">Details</a> |
+                            <a href="@($"choices/delete?id={choice.Id}")">Delete</a>
+                        </TemplateColumn>
+                    </QuickGrid>
+                }
+                <a href="@($"choices/create?QuestionId={Id}")">Add Choice</a>
+            </dd>
+        </dl>
+        <div>
+            <a href="@($"/questions/edit?id={Question.Id}")">Edit</a> |
+            <a href=@($"/quizzes/details?id={Question.QuizId}")>Back to Quiz</a>
+        </div>
+    }
+</div>
+
+@code {
+    Question? Question;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Question = await DB.Question
+                            .Include(q => q.Choices)
+                            .FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Question is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

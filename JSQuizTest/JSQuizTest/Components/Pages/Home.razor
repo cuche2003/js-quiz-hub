@@ -1,0 +1,23 @@
+﻿@page "/"
+@using System.Security.Claims
+
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h2 class="h2 fw-bolder">Welcome, @context.User.Identity?.Name!</h2>
+        <AuthorizeView Context="IsAdmin" Policy="IsAdmin">
+            <Authorized>
+                <h4 class="h4">You can start managing Quizzes by clicking the <a href="quizzes">Quizzes</a> tab.</h4>
+                <h4 class="h4">Or start managing Quiz Attempts by clicking the <a href="attempts">Attempts</a> tab.</h4>
+            </Authorized>
+            <NotAuthorized>
+                <h4 class="h4">You can choose and start a Quiz Attempt by clicking the <a href="attempts">Attempts</a> tab.</h4>
+            </NotAuthorized>
+        </AuthorizeView>
+    </Authorized>
+    <NotAuthorized>
+        <h2 class="h2 fw-bolder">Welcome, new user!</h2>
+        <h3 class="h3">Please <a href="Account/Register">register</a> and <a href="Account/Login">log in</a> to start using JSQuizHub!</h3>
+    </NotAuthorized>
+</AuthorizeView>

@@ -1,0 +1,119 @@
+﻿@page "/attempts/result"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Result</PageTitle>
+
+<h1>Result</h1>
+
+<div>
+    <h4>Attempt</h4>
+    <hr />
+    <h6 class="fst-italic text-success">Answer with this color is the correct answer.</h6>
+    <h6 class="fst-italic text-danger">Answer with this color means you chose it and it is incorrect.</h6>
+    <h6 class="fst-italic text-primary mb-2">Answer with this color means you chose it and it is correct.</h6>
+    @if (attempt is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <h3 class="mb-2 h3 fw-bold">Your final score: @GetFinalScore() / @GetMaximumScore()</h3>
+        <div>
+            @foreach (var question in Quiz!.Questions)
+            {
+                <div class="mb-5">
+                    <p class="h5">@question.Description</p>
+                    <ul class="list-group">
+                        @foreach (var choice in question!.Choices)
+                        {
+                            <li class="list-group-item @(SelectedChoices.Contains(choice.Id) ? (choice.IsCorrect ? "bg-primary" : "bg-danger") : (choice.IsCorrect ? "bg-success" : 0 ))">
+                                <input class="form-check-input" name="SelectedChoices" type="checkbox" checked="@(SelectedChoices.Contains(choice.Id))" disabled>
+                                <span class="form-check-label">@choice.Description</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+
+        <div>
+            <a href="@($"/attempts/history?quizid={Quiz.Id}")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    Attempt? attempt;
+
+    [SupplyParameterFromQuery]
+    public int? Id { get; set; }
+
+    public Quiz? Quiz { get; set; }
+
+    protected List<int> SelectedChoices { get; set; } = new List<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        attempt = await DB.Attempt.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (attempt is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        Quiz = await DB.Quiz
+                        .Include(q => q.Questions)
+                        .ThenInclude(q => q.Choices)
+                        .FirstOrDefaultAsync(q => q.Id == attempt.QuizId);
+
+        SelectedChoices = await DB.AttemptChoice
+                            .Where(ac => ac.AttemptId == Id && ac.ChoiceId != null)
+                            .Select(ac => (int)ac.ChoiceId)
+                            .ToListAsync();
+
+        if (Quiz is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+    }
+
+    protected int GetMaximumScore()
+    {
+        if (Quiz is null)
+        {
+            return 0;
+        }
+
+        return Quiz.Questions.Count();
+    }
+
+    protected int GetFinalScore()
+    {
+        if (Quiz is null)
+        {
+            return 0;
+        }
+
+        int score = 0;
+
+        foreach (var question in Quiz.Questions) {
+            var correctChoices = question.Choices.Where(c => c.IsCorrect == true).Select(c => c.Id).ToList();
+            var incorrectChoices = question.Choices.Where(c => c.IsCorrect == false).Select(c => c.Id).ToList();
+
+            if (!correctChoices.Except(SelectedChoices).Any() && incorrectChoices.Except(SelectedChoices).Any())
+            {
+                score++;
+            }
+        }
+
+        return score;
+    }
+}

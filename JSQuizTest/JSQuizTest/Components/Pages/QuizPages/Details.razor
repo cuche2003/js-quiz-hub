@@ -1,0 +1,74 @@
+﻿@page "/quizzes/details"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Quiz Details</PageTitle>
+
+<h1>Quiz Details</h1>
+
+<div>
+    <h4>Quiz Details</h4>
+    <hr />
+    @if (quiz is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@quiz.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@quiz.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Questions</dt>
+            <dd class="col-sm-10">
+            @if (quiz.Questions.Count == 0)
+            {
+                <p>This quiz has no questions (yet!).</p>
+            }
+            else
+            {
+                <QuickGrid Class="table" Items="Queryable.AsQueryable(quiz.Questions)">
+                    <PropertyColumn Property="question => question.Description" />
+                    <TemplateColumn Context="question">
+                        <a href="@($"questions/edit?id={question.Id}")">Edit</a> |
+                        <a href="@($"questions/details?id={question.Id}")">Details</a> |
+                        <a href="@($"questions/delete?id={question.Id}")">Delete</a>
+                    </TemplateColumn>
+                </QuickGrid>
+            }
+                <a href="@($"questions/create?QuizId={Id}")">Add Question</a>
+            </dd>
+        </dl>
+        <div>
+            <a href="@($"/quizzes/edit?id={quiz.Id}")">Edit</a> |
+            <a href="@($"/quizzes")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    Quiz? quiz;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        quiz = await DB.Quiz
+                        .Include(q => q.Questions)
+                        .FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (quiz is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

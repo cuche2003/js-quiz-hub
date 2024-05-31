@@ -1,0 +1,89 @@
+﻿@page "/questions/create"
+@using JSQuizTest.Models
+@using Microsoft.EntityFrameworkCore
+@using JSQuizTest.Data
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Question Create</PageTitle>
+
+<h1>Question Create</h1>
+
+<h4>Question</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Question" OnValidSubmit="AddQuestion" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            @if (QuizId is null)
+            {
+                <div class="mb-3">
+                    <label for="quiz" class="form-label">Quiz:</label>
+                    <InputSelect TValue="int" @bind-Value="Question.QuizId">
+                        @foreach (var q in Quizzes.Select((value, i) => (value, i: i + 1)))
+                        {
+                            <option value=@q.value.Id>@q.i. @q.value.Title</option>
+                        }
+                    </InputSelect>
+                </div>
+            } else
+            {
+                <input type="hidden" name="Question.QuizId" value="@QuizId" />
+            }
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="Question.Description" class="form-control" /> 
+                <ValidationMessage For="() => Question.Description" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    @if (QuizId is null)
+    {
+        <a href="/questions">Back to List</a>
+    }
+    else
+    {
+        <a href=@($"/quizzes/details?id={QuizId}")>Back to Quiz</a>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? QuizId { get; set; }
+
+    [SupplyParameterFromForm]
+    public Question Question { get; set; } = new();
+
+    public List<Quiz> Quizzes = [];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Quizzes = DbFactory.CreateDbContext().Quiz.ToList();
+    }
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddQuestion()
+    {
+        var context = await DbFactory.CreateDbContextAsync();
+        await context.Question.AddAsync(Question);
+        await context.SaveChangesAsync();
+        if (QuizId is null)
+        {
+            NavigationManager.NavigateTo("/questions");
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/quizzes/details?id={QuizId}");
+        }
+    }
+}

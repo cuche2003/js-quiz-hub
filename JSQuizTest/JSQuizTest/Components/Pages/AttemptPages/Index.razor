@@ -1,0 +1,23 @@
+﻿@page "/attempts"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using JSQuizTest.Models
+@using JSQuizTest.Data
+@inject ApplicationDbContext DB
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Quiz Attempt List</PageTitle>
+
+<h1>Quiz Attempt List</h1>
+
+<QuickGrid Class="table" Items="DB.Quiz">
+    <PropertyColumn Property="quiz => quiz.Title" />
+    <PropertyColumn Property="quiz => quiz.Description" />
+
+    <TemplateColumn Context="quiz">
+        <a href="@($"attempts/create?QuizId={quiz.Id}")">Attempt</a>
+        <a href="@($"attempts/history?QuizId={quiz.Id}")">History</a>
+    </TemplateColumn>
+</QuickGrid>
+

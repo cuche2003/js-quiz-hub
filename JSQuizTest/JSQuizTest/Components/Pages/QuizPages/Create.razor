@@ -1,0 +1,51 @@
+﻿@page "/quizzes/create"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Quiz Create</PageTitle>
+
+<h1>Quiz Create</h1>
+
+<h4>Quiz</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Quiz" OnValidSubmit="AddQuiz" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="Quiz.Title" class="form-control" /> 
+                <ValidationMessage For="() => Quiz.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="Quiz.Description" class="form-control" /> 
+                <ValidationMessage For="() => Quiz.Description" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/quizzes">Back to List</a>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public Quiz Quiz { get; set; } = new();
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddQuiz()
+    {
+        DB.Quiz.Add(Quiz);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/quizzes");
+    }
+}

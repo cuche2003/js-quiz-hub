@@ -1,0 +1,123 @@
+﻿@page "/attempts/history"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using JSQuizTest.Data
+
+@using JSQuizTest.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+
+@inject ApplicationDbContext DB
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager navigationManager
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>History</PageTitle>
+
+<h1>History</h1>
+
+@if (QuizId is null)
+{
+
+}
+else
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="h4">Your attempts</div>
+            @if (Quiz is not null)
+            {
+                <dl class="row">
+                    <dt class="col-sm-2">Title</dt>
+                    <dd class="col-sm-10">@Quiz.Title</dd>
+                    <dt class="col-sm-2">Description</dt>
+                    <dd class="col-sm-10">@Quiz.Description</dd>
+                </dl>
+            }
+            <QuickGrid Class="table"
+                       Items="@(DbFactory.CreateDbContext().Quiz
+                        .Include(q => q.Attempts.Where(a => a.UserId == context!.User!.Identity!.Name))
+                        .FirstOrDefault(q => q.Id == QuizId)!.Attempts.AsQueryable())">
+                <PropertyColumn Property="attempt => attempt.Created" />
+                <PropertyColumn Property="attempt => attempt.IsDone" />
+                <TemplateColumn Context="attempt">
+                    @if (attempt.IsDone)
+                    {
+                        <a href="@($"attempts/result?id={attempt.Id}")">Result</a>
+                    } 
+                    else
+                    {
+                        <a href="@($"attempts/details?id={attempt.Id}")">Continue</a>
+                    }
+                </TemplateColumn>
+            </QuickGrid>
+        </Authorized>
+        <NotAuthorized>
+            <p>You're not authorized.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+    <AuthorizeView Policy="IsAdmin">
+        <Authorized>
+            <div class="h4">All attempts</div>
+            @if (Quiz is not null)
+            {
+                <dl class="row">
+                    <dt class="col-sm-2">Title</dt>
+                    <dd class="col-sm-10">@Quiz.Title</dd>
+                    <dt class="col-sm-2">Description</dt>
+                    <dd class="col-sm-10">@Quiz.Description</dd>
+                </dl>
+            }
+            <QuickGrid Class="table"
+                       Items="DbFactory.CreateDbContext().Quiz
+                        .Include(q => q.Attempts)
+                        .FirstOrDefault(q => q.Id == QuizId)!.Attempts.AsQueryable()">
+                <PropertyColumn Property="attempt => attempt.UserId" />
+                <PropertyColumn Property="attempt => attempt.Created" />
+                <PropertyColumn Property="attempt => attempt.IsDone" />
+                <TemplateColumn Context="attempt">
+                    @if (attempt.IsDone)
+                    {
+                        <a href="@($"attempts/result?id={attempt.Id}")">Result</a>
+                    }
+                    else
+                    {
+                        <a href="@($"attempts/details?id={attempt.Id}")">Continue</a>
+                    }
+                     | <a href="@($"attempts/delete?id={attempt.Id}")">Delete</a>
+                </TemplateColumn>
+            </QuickGrid>
+        </Authorized>
+    </AuthorizeView>
+    <a href="/attempts">Back to List</a>
+}
+
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? QuizId { get; set; }
+
+    public Quiz? Quiz { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (QuizId is null)
+        {
+            navigationManager.NavigateTo("notfount");
+        }
+
+        var context = await DbFactory.CreateDbContextAsync();
+        Quiz = await context.Quiz.FindAsync(QuizId);
+    }
+
+    protected int GetMaximumScore()
+    {
+        if (Quiz is null)
+        {
+            return 0;
+        }
+
+        return Quiz.Questions.Count();
+    }
+}

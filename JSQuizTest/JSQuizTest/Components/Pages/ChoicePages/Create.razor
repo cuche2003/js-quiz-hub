@@ -1,0 +1,96 @@
+﻿@page "/choices/create"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using Microsoft.EntityFrameworkCore
+@using JSQuizTest.Data
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Choice Create</PageTitle>
+
+<h1>Choice Create</h1>
+
+<h4>Choice</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Choice" OnValidSubmit="AddChoice" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            @if (QuestionId is null)
+            {
+                <div class="mb-3">
+                    <label for="question" class="form-label">Question:</label>
+                    <InputSelect TValue="int" @bind-Value="Choice.QuestionId">
+                        @foreach (var q in Questions.Select((value, i) => (value, i: i + 1)))
+                        {
+                            <option value=@q.value.Id>@q.i. @q.value.Description</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" name="Choice.QuestionId" value="@QuestionId" />
+            }
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="Choice.Description" class="form-control" /> 
+                <ValidationMessage For="() => Choice.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="iscorrect" class="form-label">IsCorrect:</label> 
+                <InputCheckbox id="iscorrect" @bind-Value="Choice.IsCorrect" class="form-check-input" /> 
+                <ValidationMessage For="() => Choice.IsCorrect" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    @if (QuestionId is null)
+    {
+        <a href="/choices">Back to List</a>
+    }
+    else
+    {
+        <a href=@($"/questions/details?id={QuestionId}")>Back to Question</a>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? QuestionId { get; set; }
+
+    [SupplyParameterFromForm]
+    public Choice Choice { get; set; } = new();
+
+    public List<Question> Questions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+
+        Questions = await DbFactory.CreateDbContext().Question.ToListAsync();
+    }
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddChoice()
+    {
+        DB.Choice.Add(Choice);
+        await DB.SaveChangesAsync();
+        if (QuestionId is null)
+        {
+            NavigationManager.NavigateTo("/choices");
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/questions/details?id={QuestionId}");
+        }
+    }
+}

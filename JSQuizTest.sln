@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34902.65
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JSQuizTest", "JSQuizTest\JSQuizTest\JSQuizTest.csproj", "{9285E26A-C4D8-4221-839E-EFBD59F666DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JSQuizTest.Client", "JSQuizTest\JSQuizTest.Client\JSQuizTest.Client.csproj", "{7F0340EA-257E-4F89-A289-4C517492C094}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9285E26A-C4D8-4221-839E-EFBD59F666DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9285E26A-C4D8-4221-839E-EFBD59F666DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9285E26A-C4D8-4221-839E-EFBD59F666DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9285E26A-C4D8-4221-839E-EFBD59F666DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F0340EA-257E-4F89-A289-4C517492C094}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F0340EA-257E-4F89-A289-4C517492C094}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F0340EA-257E-4F89-A289-4C517492C094}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F0340EA-257E-4F89-A289-4C517492C094}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FB147E0F-37FA-4627-9DEB-136A58F487D2}
+	EndGlobalSection
+EndGlobal

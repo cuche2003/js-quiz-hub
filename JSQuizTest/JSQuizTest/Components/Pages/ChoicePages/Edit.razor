@@ -1,0 +1,107 @@
+﻿@page "/choices/edit"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>Choice</h4>
+<hr />
+@if (Choice is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Choice" OnValidSubmit="UpdateChoice" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Choice.Id" value="@Choice.Id" />
+                <input type="hidden" name="Choice.QuestionId" value="@Choice.QuestionId" />
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Choice.Description" class="form-control" />
+                    <ValidationMessage For="() => Choice.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="iscorrect" class="form-label">IsCorrect:</label>
+                    <InputCheckbox id="iscorrect" @bind-Value="Choice.IsCorrect" class="form-check-input" />
+                    <ValidationMessage For="() => Choice.IsCorrect" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (Choice is not null)
+{
+    <div>
+        <a href=@($"/questions/details?Id={Choice.QuestionId}")>Back to Question</a>
+    </div>
+}
+
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public Choice? Choice { get; set; }
+
+    public List<Question> Questions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Choice ??= await DB.Choice.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Choice is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+        Questions = await DB.Question.ToListAsync();
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateChoice()
+    {
+        DB.Attach(Choice!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ChoiceExists(Choice!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        if (Choice is not null)
+        {
+            NavigationManager.NavigateTo($"/questions/details?Id={Choice.QuestionId}");
+        }
+
+    }
+
+    bool ChoiceExists(int id)
+    {
+        return DB.Choice.Any(e => e.Id == id);
+    }
+}

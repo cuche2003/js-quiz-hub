@@ -1,0 +1,52 @@
+﻿@page "/choices/details"
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h4>Choice</h4>
+    <hr />
+    @if (choice is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">QuestionId</dt>
+            <dd class="col-sm-10">@choice.QuestionId</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@choice.Description</dd>
+            <dt class="col-sm-2">IsCorrect</dt>
+            <dd class="col-sm-10">@choice.IsCorrect</dd>
+        </dl>
+        <div>
+            <a href="@($"/choices/edit?id={choice.Id}")">Edit</a> |
+            <a href=@($"/questions/details?id={choice.QuestionId}")>Back to Question</a>
+        </div>
+    }
+</div>
+
+@code {
+    Choice? choice;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        choice = await DB.Choice.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (choice is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

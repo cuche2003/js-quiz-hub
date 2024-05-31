@@ -1,0 +1,100 @@
+﻿@page "/Questions/edit"
+@using JSQuizTest.Data
+@inject ApplicationDbContext DB
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@using JSQuizTest.Models
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Quiz Edit</PageTitle>
+
+<h1>Quiz Edit</h1>
+
+<h4>Question</h4>
+<hr />
+@if (Question is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm Context="EditQuestion" method="post" Model="Question" OnValidSubmit="UpdateQuestion" FormName="EditQuestion" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Question.Id" value="@Question.Id" />
+                <input type="hidden" name="Question.QuizId" value="@Question.QuizId" />
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Question.Description" class="form-control" />
+                    <ValidationMessage For="() => Question.Description" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save Question</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (Question is not null)
+{
+    <div>
+        <a href=@($"/quizzes/details?id={Question.QuizId}")>Back to Quiz</a>
+    </div>
+}
+
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public Question? Question { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Question ??= await DB.Question.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Question is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateQuestion()
+    {
+        var context = await DbFactory.CreateDbContextAsync();
+        context.Question.Attach(Question!).State = EntityState.Modified;
+        
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!QuestionExists(Question!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        if (Question is not null)
+        {
+            NavigationManager.NavigateTo($"/quizzes/details?id={Question.QuizId}");
+        }
+    }
+
+    bool QuestionExists(int id)
+    {
+        return DbFactory.CreateDbContext().Question.Find(id) != null;
+    }
+}

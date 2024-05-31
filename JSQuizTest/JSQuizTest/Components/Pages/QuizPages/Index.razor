@@ -1,0 +1,26 @@
+﻿@page "/quizzes"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject JSQuizTest.Data.ApplicationDbContext DB
+@using JSQuizTest.Models
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "IsAdmin")]
+
+<PageTitle>Quiz List</PageTitle>
+
+<h1>Quiz List</h1>
+
+<p>
+    <a href="quizzes/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.Quiz">
+    <PropertyColumn Property="quiz => quiz.Title" />
+    <PropertyColumn Property="quiz => quiz.Description" />
+
+    <TemplateColumn Context="quiz">
+        <a href="@($"quizzes/edit?id={quiz.Id}")">Edit</a> |
+        <a href="@($"quizzes/details?id={quiz.Id}")">Details</a> |
+        <a href="@($"quizzes/delete?id={quiz.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
